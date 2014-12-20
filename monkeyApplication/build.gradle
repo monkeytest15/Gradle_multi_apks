@@ -1,0 +1,93 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:1.0.0'
+
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+
+}
+apply plugin: 'com.android.application'
+
+
+android {
+    compileSdkVersion 21
+    buildToolsVersion "20.0.0"
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            resources.srcDirs = ['src/main/res']
+            aidl.srcDirs = ['src']
+            renderscript.srcDirs = ['src']
+            res.srcDirs = ['res/main/res']
+            assets.srcDirs = ['assets']
+        }
+        instrumentTest.setRoot('tests')
+    }
+
+
+    defaultConfig {
+        applicationId "com.example.monkey.myapplication"
+        minSdkVersion 10
+        targetSdkVersion 21
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+
+    //这个是解决lint报错的代码
+    lintOptions {
+        abortOnError false
+    }
+    signingConfigs {
+        myConfigs {
+            storeFile file("/Users/monkey/.android/debug.keystore")
+            keyAlias "..."
+            keyPassword "..."
+            storePassword "..."
+        }
+    }
+
+
+}
+
+
+allprojects {
+    repositories {
+        jcenter()
+    }
+}
+
+
+//替换AndroidManifest.xml的REPLACE_KEY字符串为渠道名称
+android.applicationVariants.all { variant ->
+    variant.outputs.each { output ->
+        output.processManifest.doLast {
+            //v1.11之前这里用的copy{}，我换成了文件操作，这样可以在v1.11版本正常运行，并保持文件夹整洁
+            //${buildDir}是指build文件夹
+            //${variant.dirName}是flavor/buildtype，例如GooglePlay/release，运行时会自动生成
+            //下面的路径是类似这样：build/intermediates/manifests/GooglePlay/release/AndroidManifest.xml
+            def manifestFile = "${buildDir}/intermediates/manifests/full/${variant.dirName}/AndroidManifest.xml"
+
+            //将字符串REPLACE_KEY替换成flavor的名字
+            def updatedContent = new File(manifestFile).getText('UTF-8').replaceAll("REPLACE_KEY", "${variant.productFlavors[0].name}")
+            new File(manifestFile).write(updatedContent, 'UTF-8')
+
+            //将此次flavor的AndroidManifest.xml文件指定为我们修改过的这个文件
+            variant.processResources.manifestFile = file("${buildDir}/intermediates/manifests/full/${variant.dirName}/AndroidManifest.xml")
+        }
+    }
+}
