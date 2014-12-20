@@ -25,10 +25,10 @@ android {
     }
     signingConfigs {
         myConfigs {
-            storeFile file( System.console().readLine("\n\$ Enter keystore path: "))
-            keyAlias "..."
-            keyPassword "..."
-            storePassword "..."
+            storeFile     file( System.console().readLine("\n\$ Enter keystore path: "))
+            storePassword       System.console().readPassword("\n\$ Enter keystore password: ")
+            keyAlias            System.console().readLine("\n\$ Enter key alias: ")
+            keyPassword         System.console().readPassword("\n\$ Enter key password: ")
         }
     }
     productFlavors {
